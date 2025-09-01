@@ -116,8 +116,8 @@ export class SearchService {
         duration: '24:15',
         viewCount: '1.2M views',
         publishedAt: '2024-01-15',
-        thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
-        url: 'https://youtube.com/watch?v=example1',
+        thumbnailUrl: 'https://img.youtube.com/vi/ukzFI9rgwfU/maxresdefault.jpg',
+        url: 'https://youtube.com/watch?v=ukzFI9rgwfU',
         description: `Comprehensive tutorial covering all aspects of ${query}...`
       },
       {
@@ -127,8 +127,8 @@ export class SearchService {
         duration: '10:32',
         viewCount: '850K views',
         publishedAt: '2024-01-10',
-        thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
-        url: 'https://youtube.com/watch?v=example2',
+        thumbnailUrl: 'https://img.youtube.com/vi/LlKAna21fLE/maxresdefault.jpg',
+        url: 'https://youtube.com/watch?v=LlKAna21fLE',
         description: `Quick overview of ${query} fundamentals...`
       }
     ];
