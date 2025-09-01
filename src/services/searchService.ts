@@ -216,9 +216,6 @@ export class SearchService {
     } catch (error) {
       console.error('Flashcard generation error:', error);
       return this.getMockFlashcards(topic);
-    } catch (error) {
-      console.error('Flashcard generation error:', error);
-      return this.getMockFlashcards(topic);
     }
   }
 
