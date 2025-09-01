@@ -19,13 +19,43 @@ export class SearchService {
   // YouTube API Integration
   async searchYouTubeVideos(query: string, maxResults: number = 5) {
     try {
-      // TODO: Implement actual YouTube Data API v3 call
-      // const response = await fetch(
-      //   `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${this.YOUTUBE_API_KEY}`
-      // );
+      if (!this.YOUTUBE_API_KEY) {
+        console.warn('YouTube API key not found, using mock data');
+        return this.getMockYouTubeVideos(query);
+      }
+
+      const searchResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${this.YOUTUBE_API_KEY}`
+      );
+
+      if (!searchResponse.ok) {
+        throw new Error(`YouTube API error: ${searchResponse.status}`);
+      }
+
+      const searchData = await searchResponse.json();
       
-      // Mock data for demonstration
-      return this.getMockYouTubeVideos(query);
+      // Get video details for duration and view count
+      const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
+      const detailsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=${videoIds}&key=${this.YOUTUBE_API_KEY}`
+      );
+
+      const detailsData = await detailsResponse.json();
+      
+      return searchData.items.map((item: any, index: number) => {
+        const details = detailsData.items[index];
+        return {
+          id: item.id.videoId,
+          title: item.snippet.title,
+          channelName: item.snippet.channelTitle,
+          duration: this.formatDuration(details?.contentDetails?.duration || 'PT0M0S'),
+          viewCount: this.formatViewCount(details?.statistics?.viewCount || '0'),
+          publishedAt: item.snippet.publishedAt,
+          thumbnailUrl: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default.url,
+          url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+          description: item.snippet.description
+        };
+      });
     } catch (error) {
       console.error('YouTube API error:', error);
       return this.getMockYouTubeVideos(query);
@@ -68,26 +98,64 @@ export class SearchService {
   // AI-powered Quiz Generation
   async generateQuiz(topic: string, difficulty: string = 'intermediate') {
     try {
-      // TODO: Implement AI API call (OpenAI, Claude, etc.)
-      // const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     model: 'gpt-4',
-      //     messages: [
-      //       {
-      //         role: 'system',
-      //         content: `Generate a ${difficulty} level quiz about ${topic} with 5-10 multiple choice questions.`
-      //       }
-      //     ]
-      //   })
-      // });
+      if (!this.OPENAI_API_KEY) {
+        console.warn('OpenAI API key not found, using mock data');
+        return this.getMockQuiz(topic);
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an educational quiz generator. Create a ${difficulty} level quiz about ${topic} with exactly 5 multiple choice questions. Return ONLY a valid JSON object with this structure:
+              {
+                "title": "Quiz Title",
+                "questions": [
+                  {
+                    "question": "Question text",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correctAnswer": 0,
+                    "explanation": "Explanation of the correct answer"
+                  }
+                ]
+              }`
+            },
+            {
+              role: 'user',
+              content: `Generate a ${difficulty} level quiz about ${topic}`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const quizData = JSON.parse(data.choices[0].message.content);
       
-      // Mock data for demonstration
-      return this.getMockQuiz(topic);
+      return {
+        id: `quiz-${Date.now()}`,
+        title: quizData.title,
+        questions: quizData.questions.map((q: any, index: number) => ({
+          id: `q${index + 1}`,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation
+        })),
+        completed: false
+      };
     } catch (error) {
       console.error('Quiz generation error:', error);
       return this.getMockQuiz(topic);
@@ -97,13 +165,86 @@ export class SearchService {
   // AI-powered Flashcard Generation
   async generateFlashcards(topic: string) {
     try {
-      // TODO: Implement AI API call for flashcard generation
-      // Mock data for demonstration
+      if (!this.OPENAI_API_KEY) {
+        console.warn('OpenAI API key not found, using mock data');
+        return this.getMockFlashcards(topic);
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an educational flashcard generator. Create exactly 8 flashcards about ${topic}. Return ONLY a valid JSON array with this structure:
+              [
+                {
+                  "front": "Question or term",
+                  "back": "Answer or definition",
+                  "difficulty": "easy|medium|hard"
+                }
+              ]`
+            },
+            {
+              role: 'user',
+              content: `Generate 8 educational flashcards about ${topic}`
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const flashcards = JSON.parse(data.choices[0].message.content);
+      
+      return flashcards.map((card: any, index: number) => ({
+        id: `fc-${index + 1}`,
+        front: card.front,
+        back: card.back,
+        difficulty: card.difficulty || 'medium'
+      }));
+    } catch (error) {
+      console.error('Flashcard generation error:', error);
       return this.getMockFlashcards(topic);
     } catch (error) {
       console.error('Flashcard generation error:', error);
       return this.getMockFlashcards(topic);
     }
+  }
+
+  // Helper methods for YouTube API
+  private formatDuration(duration: string): string {
+    const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    if (!match) return '0:00';
+    
+    const hours = parseInt(match[1]?.replace('H', '') || '0');
+    const minutes = parseInt(match[2]?.replace('M', '') || '0');
+    const seconds = parseInt(match[3]?.replace('S', '') || '0');
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private formatViewCount(viewCount: string): string {
+    const count = parseInt(viewCount);
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M views`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K views`;
+    }
+    return `${count} views`;
   }
 
   // Mock data methods (replace with actual API responses)
