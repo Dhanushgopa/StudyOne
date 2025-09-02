@@ -21,14 +21,15 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
     
     try {
       // Perform parallel searches for all content types
-      const [videos, articles, papers, quiz, flashcards] = await Promise.all([
+      const [videos, articles, papers, flashcards] = await Promise.all([
         searchService.searchYouTubeVideos(searchQuery),
         searchService.searchArticles(searchQuery),
         searchService.searchResearchPapers(searchQuery),
-        searchService.generateQuiz(searchQuery),
         searchService.generateFlashcards(searchQuery)
       ]);
 
+      // Generate quiz separately to handle potential longer processing time
+      const quiz = await searchService.generateQuiz(searchQuery, 'intermediate');
       const searchResult: SearchResult = {
         id: `search-${Date.now()}`,
         query: searchQuery,

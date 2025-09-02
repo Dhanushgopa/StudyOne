@@ -98,6 +98,8 @@ export class SearchService {
   // AI-powered Quiz Generation
   async generateQuiz(topic: string, difficulty: string = 'intermediate') {
     try {
+      const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+      
       if (!this.OPENAI_API_KEY) {
         console.warn('OpenAI API key not found, using mock data');
         return this.getMockQuiz(topic);
@@ -106,7 +108,7 @@ export class SearchService {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -114,9 +116,9 @@ export class SearchService {
           messages: [
             {
               role: 'system',
-              content: `You are an educational quiz generator. Create a ${difficulty} level quiz about ${topic} with exactly 5 multiple choice questions. Return ONLY a valid JSON object with this structure:
+              content: `You are an educational quiz generator. Create a ${difficulty} level quiz about ${topic} with exactly 8 multiple choice questions. Each question should be well-crafted and educational. Return ONLY a valid JSON object with this structure:
               {
-                "title": "Quiz Title",
+                "title": "${topic} Knowledge Quiz",
                 "questions": [
                   {
                     "question": "Question text",
@@ -125,24 +127,43 @@ export class SearchService {
                     "explanation": "Explanation of the correct answer"
                   }
                 ]
-              }`
+              }
+              
+              Make sure:
+              - Questions are educational and test real understanding
+              - All 4 options are plausible but only one is correct
+              - Explanations are clear and informative
+              - Questions cover different aspects of ${topic}
+              - Difficulty is appropriate for ${difficulty} level`
             },
             {
               role: 'user',
-              content: `Generate a ${difficulty} level quiz about ${topic}`
+              content: `Generate a comprehensive ${difficulty} level quiz with 8 multiple choice questions about ${topic}. Focus on practical knowledge and key concepts.`
             }
           ],
           temperature: 0.7,
-          max_tokens: 2000
+          max_tokens: 3000
         })
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('OpenAI API error:', response.status, errorText);
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        throw new Error('Invalid response format from OpenAI');
+      }
+      
       const quizData = JSON.parse(data.choices[0].message.content);
+      
+      // Validate the quiz data structure
+      if (!quizData.title || !quizData.questions || !Array.isArray(quizData.questions)) {
+        throw new Error('Invalid quiz data structure from OpenAI');
+      }
       
       return {
         id: `quiz-${Date.now()}`,
@@ -320,31 +341,103 @@ export class SearchService {
   private getMockQuiz(topic: string) {
     return {
       id: `quiz-${Date.now()}`,
-      title: `${topic} Knowledge Check`,
+      title: `${topic} Knowledge Quiz`,
       questions: [
         {
           id: 'q1',
-          question: `What is the primary purpose of ${topic}?`,
+          question: `What is a fundamental concept in ${topic}?`,
           options: [
-            'To solve complex computational problems',
-            'To improve user experience',
-            'To reduce system costs',
+            'Basic understanding of core principles',
+            'Advanced implementation techniques',
+            'Historical background only',
             'All of the above'
           ],
-          correctAnswer: 3,
-          explanation: `${topic} serves multiple purposes including solving problems, improving UX, and reducing costs.`
+          correctAnswer: 0,
+          explanation: `Understanding core principles is fundamental when learning ${topic}.`
         },
         {
           id: 'q2',
-          question: `Which of the following is a key characteristic of ${topic}?`,
+          question: `What makes ${topic} important in modern development?`,
           options: [
-            'High scalability',
-            'Low latency',
-            'Easy implementation',
-            'Cost effectiveness'
+            'It solves real-world problems',
+            'It has a large community',
+            'It offers good performance',
+            'All of the above'
           ],
-          correctAnswer: 0,
-          explanation: `Scalability is one of the most important characteristics of ${topic}.`
+          correctAnswer: 3,
+          explanation: `${topic} is valuable because it combines problem-solving capabilities, community support, and performance benefits.`
+        },
+        {
+          id: 'q3',
+          question: `When working with ${topic}, what should you prioritize?`,
+          options: [
+            'Speed of development only',
+            'Code quality and maintainability',
+            'Using the latest features',
+            'Following trends blindly'
+          ],
+          correctAnswer: 1,
+          explanation: `Code quality and maintainability are crucial for long-term success with ${topic}.`
+        },
+        {
+          id: 'q4',
+          question: `What is a common best practice when learning ${topic}?`,
+          options: [
+            'Memorizing syntax only',
+            'Understanding concepts and practicing',
+            'Copying code without understanding',
+            'Avoiding documentation'
+          ],
+          correctAnswer: 1,
+          explanation: `Understanding concepts and regular practice leads to mastery of ${topic}.`
+        },
+        {
+          id: 'q5',
+          question: `How does ${topic} fit into the broader technology landscape?`,
+          options: [
+            'It works in isolation',
+            'It integrates with other technologies',
+            'It replaces all other tools',
+            'It has limited applications'
+          ],
+          correctAnswer: 1,
+          explanation: `${topic} is most powerful when integrated with other technologies in the ecosystem.`
+        },
+        {
+          id: 'q6',
+          question: `What should beginners focus on when starting with ${topic}?`,
+          options: [
+            'Advanced features immediately',
+            'Fundamentals and basic concepts',
+            'Complex projects right away',
+            'Memorizing all documentation'
+          ],
+          correctAnswer: 1,
+          explanation: `Building a strong foundation with fundamentals is essential for success with ${topic}.`
+        },
+        {
+          id: 'q7',
+          question: `What makes someone proficient in ${topic}?`,
+          options: [
+            'Years of experience only',
+            'Understanding principles and continuous learning',
+            'Knowing every feature by heart',
+            'Working on one project type'
+          ],
+          correctAnswer: 1,
+          explanation: `Proficiency comes from understanding core principles and staying updated with ${topic} developments.`
+        },
+        {
+          id: 'q8',
+          question: `What is the most effective way to improve ${topic} skills?`,
+          options: [
+            'Reading documentation only',
+            'Watching tutorials passively',
+            'Hands-on practice and building projects',
+            'Attending conferences only'
+          ],
+          correctAnswer: 2,
+          explanation: `Active practice and building real projects is the most effective way to improve ${topic} skills.`
         }
       ],
       completed: false
