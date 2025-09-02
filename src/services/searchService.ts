@@ -448,20 +448,50 @@ export class SearchService {
     return [
       {
         id: 'fc-1',
-        front: `What is ${topic}?`,
-        back: `${topic} is a fundamental concept that involves systematic approaches to problem-solving and optimization.`,
+        front: `What are the core principles that make ${topic} effective for solving complex problems?`,
+        back: `${topic} succeeds through systematic approaches that emphasize modularity, scalability, and maintainability. Key principles include separation of concerns, efficient resource utilization, and robust error handling. These principles enable developers to build reliable, performant solutions that can evolve with changing requirements while maintaining code quality and team productivity.`,
         difficulty: 'easy' as const
       },
       {
         id: 'fc-2',
-        front: `Key benefits of ${topic}`,
-        back: 'Improved efficiency, better scalability, reduced complexity, and enhanced user experience.',
+        front: `How does ${topic} handle scalability challenges in high-traffic production environments?`,
+        back: `${topic} addresses scalability through multiple strategies: horizontal scaling (distributing load across multiple instances), efficient resource management (optimizing memory and CPU usage), caching mechanisms (reducing redundant operations), and asynchronous processing (handling concurrent requests effectively). These approaches enable applications to maintain performance as user demand increases, while providing monitoring tools to identify and resolve bottlenecks proactively.`,
         difficulty: 'medium' as const
       },
       {
         id: 'fc-3',
-        front: `Advanced ${topic} techniques`,
-        back: 'Include optimization algorithms, machine learning integration, and distributed processing methods.',
+        front: `What advanced optimization techniques can significantly improve ${topic} performance in enterprise applications?`,
+        back: `Advanced optimization includes: 1) Algorithmic improvements (choosing optimal data structures and algorithms), 2) Memory management (reducing garbage collection overhead and memory leaks), 3) Database optimization (query optimization, connection pooling, indexing strategies), 4) Caching layers (Redis, CDNs, application-level caching), 5) Code profiling and performance monitoring, 6) Microservices architecture for better resource allocation. These techniques can improve performance by 10-100x when applied systematically.`,
+        difficulty: 'hard' as const
+      },
+      {
+        id: 'fc-4',
+        front: `What are the most common security vulnerabilities in ${topic} applications and how can they be prevented?`,
+        back: `Common vulnerabilities include: 1) Input validation failures (prevent with sanitization and validation), 2) Authentication/authorization flaws (implement proper session management and access controls), 3) Data exposure (use encryption and secure communication), 4) Dependency vulnerabilities (regular updates and security audits), 5) Configuration errors (secure defaults and environment-specific settings). Prevention requires security-first design, regular testing, code reviews, and staying updated with security best practices and patches.`,
+        difficulty: 'medium' as const
+      },
+      {
+        id: 'fc-5',
+        front: `How do you design maintainable and testable ${topic} applications?`,
+        back: `Maintainable design principles: 1) Modular architecture (single responsibility, loose coupling), 2) Clear documentation and naming conventions, 3) Comprehensive testing strategy (unit, integration, end-to-end), 4) Version control best practices, 5) Code review processes, 6) Continuous integration/deployment, 7) Monitoring and logging. These practices reduce technical debt, enable team collaboration, and ensure long-term project success by making code easier to understand, modify, and extend.`,
+        difficulty: 'medium' as const
+      },
+      {
+        id: 'fc-6',
+        front: `What debugging strategies are most effective when troubleshooting complex ${topic} issues?`,
+        back: `Effective debugging approach: 1) Reproduce the issue consistently, 2) Use appropriate debugging tools and logging, 3) Apply systematic elimination (isolate components), 4) Check recent changes and dependencies, 5) Review error messages and stack traces carefully, 6) Use performance profiling tools, 7) Test hypotheses methodically, 8) Document findings for future reference. This systematic approach saves time and builds deeper understanding of system behavior.`,
+        difficulty: 'easy' as const
+      },
+      {
+        id: 'fc-7',
+        front: `How does ${topic} integrate with modern DevOps practices and cloud infrastructure?`,
+        back: `${topic} integrates through: 1) Containerization (Docker, Kubernetes for consistent deployment), 2) CI/CD pipelines (automated testing and deployment), 3) Infrastructure as Code (Terraform, CloudFormation), 4) Monitoring and observability (metrics, logging, tracing), 5) Auto-scaling and load balancing, 6) Security scanning and compliance, 7) Multi-environment management. This integration enables reliable, scalable, and maintainable applications in cloud environments.`,
+        difficulty: 'hard' as const
+      },
+      {
+        id: 'fc-8',
+        front: `What emerging trends and future developments should ${topic} practitioners be aware of?`,
+        back: `Key trends include: 1) AI/ML integration (automated optimization, intelligent monitoring), 2) Serverless and edge computing adoption, 3) Enhanced security frameworks and zero-trust architectures, 4) Improved developer experience tools, 5) Sustainability and green computing practices, 6) Advanced observability and AIOps, 7) Low-code/no-code integration capabilities. Staying current with these trends ensures competitive advantage and career growth in the evolving technology landscape.`,
         difficulty: 'hard' as const
       }
     ];
