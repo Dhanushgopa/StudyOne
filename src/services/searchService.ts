@@ -278,6 +278,18 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
     throw new Error('Max retries exceeded');
   }
 
+  // Test Gemini connection
+  async testGeminiConnection() {
+    if (!this.genAI) {
+      throw new Error('Gemini API not initialized');
+    }
+    
+    const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent("Say hello in one word");
+    const response = await result.response;
+    return response.text();
+  }
+
   // Helper methods for YouTube API
   private formatDuration(duration: string): string {
     const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
