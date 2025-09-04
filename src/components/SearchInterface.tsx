@@ -20,16 +20,25 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
     setIsSearching(true);
     
     try {
-      // Perform parallel searches for all content types
-      const [videos, articles, papers, flashcards] = await Promise.all([
+      console.log('Starting search for:', searchQuery);
+      
+      // Perform parallel searches for content types (except quiz which takes longer)
+      const [videos, articles, papers] = await Promise.all([
         searchService.searchYouTubeVideos(searchQuery),
         searchService.searchArticles(searchQuery),
-        searchService.searchResearchPapers(searchQuery),
-        searchService.generateFlashcards(searchQuery)
+        searchService.searchResearchPapers(searchQuery)
       ]);
 
-      // Generate quiz separately to handle potential longer processing time
-      const quiz = await searchService.generateQuiz(searchQuery, 'intermediate');
+      console.log('Basic search completed, generating AI content...');
+      
+      // Generate AI content (quiz and flashcards) - these may take longer
+      const [quiz, flashcards] = await Promise.all([
+        searchService.generateQuiz(searchQuery, 'intermediate'),
+        searchService.generateFlashcards(searchQuery)
+      ]);
+      
+      console.log('AI content generation completed');
+      
       const searchResult: SearchResult = {
         id: `search-${Date.now()}`,
         query: searchQuery,
@@ -47,6 +56,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
       onSearchComplete(searchResult);
     } catch (error) {
       console.error('Search error:', error);
+      alert('Search failed. Please check your API keys and try again.');
     } finally {
       setIsSearching(false);
     }

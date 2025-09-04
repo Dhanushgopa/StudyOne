@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 // This service will handle API calls to various educational content sources
 // Add your API keys and implement actual API calls here
 
@@ -8,12 +10,22 @@ export class SearchService {
   private readonly YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
   private readonly GOOGLE_SEARCH_API_KEY = import.meta.env.VITE_GOOGLE_SEARCH_API_KEY || '';
   private readonly GOOGLE_SEARCH_ENGINE_ID = import.meta.env.VITE_GOOGLE_SEARCH_ENGINE_ID || '';
+  private readonly GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+  private readonly PUBMED_API_KEY = import.meta.env.VITE_PUBMED_API_KEY || '';
+  
+  private genAI: GoogleGenerativeAI | null = null;
   
   public static getInstance(): SearchService {
     if (!SearchService.instance) {
       SearchService.instance = new SearchService();
     }
     return SearchService.instance;
+  }
+
+  constructor() {
+    if (this.GEMINI_API_KEY) {
+      this.genAI = new GoogleGenerativeAI(this.GEMINI_API_KEY);
+    }
   }
 
   // YouTube API Integration
@@ -98,135 +110,81 @@ export class SearchService {
   // AI-powered Quiz Generation
   async generateQuiz(topic: string, difficulty: string = 'intermediate') {
     try {
-      const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      if (!this.OPENAI_API_KEY) {
-        console.warn('OpenAI API key not found, using mock data');
+      if (!this.genAI) {
+        console.warn('Gemini API key not found, using mock data');
         return this.getMockQuiz(topic);
       }
+      
+      const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      const prompt = `You are an expert educational content creator. Create a comprehensive ${difficulty} level quiz about "${topic}" with exactly 8 multiple choice questions.
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an educational quiz generator. Create a ${difficulty} level quiz about ${topic} with exactly 8 multiple choice questions. Each question should be well-crafted and educational. Return ONLY a valid JSON object with this structure:
-              {
-                "title": "${topic} Knowledge Quiz",
-                "questions": [
-                  {
-                    "question": "Question text",
-                    "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "correctAnswer": 0,
-                    "explanation": "Explanation of the correct answer"
-                  }
-                ]
-              }
-              
-              Make sure:
-              - Questions are educational and test real understanding
-              - All 4 options are plausible but only one is correct
-              - Explanations are clear and informative
-              - Questions cover different aspects of ${topic}
-              - Difficulty is appropriate for ${difficulty} level`
-            },
-            {
-              role: 'user',
-              content: `Generate a comprehensive ${difficulty} level quiz with 8 multiple choice questions about ${topic}. Focus on practical knowledge and key concepts.`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 3000
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Invalid response format from OpenAI');
-      }
-      
-      const quizData = JSON.parse(data.choices[0].message.content);
-      
-      // Validate the quiz data structure
-      if (!quizData.title || !quizData.questions || !Array.isArray(quizData.questions)) {
-        throw new Error('Invalid quiz data structure from OpenAI');
-      }
-      
-      return {
-        id: `quiz-${Date.now()}`,
-        title: quizData.title,
-        questions: quizData.questions.map((q: any, index: number) => ({
-          id: `q${index + 1}`,
-          question: q.question,
-          options: q.options,
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation
-        })),
-        completed: false
-      };
-    } catch (error) {
-      console.error('Quiz generation error:', error);
-      return this.getMockQuiz(topic);
+CRITICAL: Return ONLY a valid JSON object with this exact structure:
+{
+  "title": "${topic} Knowledge Quiz",
+  "questions": [
+    {
+      "question": "Question text here",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": 0,
+      "explanation": "Detailed explanation of why this answer is correct"
     }
+  ]
+}
+
+Requirements for each question:
+1. Test different cognitive levels: recall, comprehension, application, analysis
+2. Cover diverse aspects of ${topic}: fundamentals, applications, best practices, troubleshooting, advanced concepts, real-world scenarios
+3. Make all 4 options plausible but only one correct
+4. Provide educational explanations that teach concepts
+5. Use specific, practical examples related to ${topic}
+6. Vary difficulty across questions (2 easy, 4 medium, 2 hard)
+7. Focus on practical knowledge and real-world applications
+8. Avoid generic or superficial questions
+      const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      const prompt = `You are an expert educational flashcard creator. Create exactly 8 comprehensive flashcards about "${topic}".
+
+CRITICAL: Return ONLY a valid JSON array with this exact structure:
+[
+  {
+    "front": "Clear, specific question or prompt",
+    "back": "Comprehensive, detailed answer with explanations and examples",
+    "difficulty": "easy|medium|hard"
   }
+]
 
-  // AI-powered Flashcard Generation
-  async generateFlashcards(topic: string) {
-    try {
-      if (!this.OPENAI_API_KEY) {
-        console.warn('OpenAI API key not found, using mock data');
-        return this.getMockFlashcards(topic);
+Requirements:
+1. Each flashcard must teach something substantial about ${topic}
+2. Front: Clear, specific questions that test understanding
+3. Back: Comprehensive answers with explanations, examples, and context
+4. Include practical applications and real-world connections
+5. Difficulty distribution: 2 easy, 4 medium, 2 hard
+6. Cover different aspects: fundamentals, applications, best practices, troubleshooting, advanced concepts, security, performance, trends
+7. Provide comprehensive explanations, not just definitions
+8. Include specific examples and practical scenarios
+9. Explain the "why" and "how", not just the "what"
+10. Make each answer a mini-lesson with genuine educational value
+
+Focus on practical knowledge and real-world applications of ${topic}.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Clean the response to extract JSON
+      let jsonText = text.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
       }
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an educational flashcard generator. Create exactly 8 flashcards about ${topic}. Return ONLY a valid JSON array with this structure:
-              [
-                {
-                  "front": "Question or term",
-                  "back": "Answer or definition",
-                  "difficulty": "easy|medium|hard"
-                }
-              ]`
-            },
-            {
-              role: 'user',
-              content: `Generate 8 educational flashcards about ${topic}`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1500
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
+      const flashcards = JSON.parse(jsonText);
+      
+      if (!Array.isArray(flashcards) || flashcards.length !== 8) {
+        throw new Error('Invalid flashcard data structure from Gemini');
       }
-
-      const data = await response.json();
-      const flashcards = JSON.parse(data.choices[0].message.content);
       
       return flashcards.map((card: any, index: number) => ({
         id: `fc-${index + 1}`,
@@ -235,7 +193,7 @@ export class SearchService {
         difficulty: card.difficulty || 'medium'
       }));
     } catch (error) {
-      console.error('Flashcard generation error:', error);
+      console.error('Gemini flashcard generation error:', error);
       return this.getMockFlashcards(topic);
     }
   }
