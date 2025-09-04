@@ -11,8 +11,34 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [apiStatus, setApiStatus] = useState<string>('');
 
   const searchService = SearchService.getInstance();
+
+  // Test API on component mount
+  React.useEffect(() => {
+    const testAPI = async () => {
+      console.log('Testing Gemini API...');
+      const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      console.log('Gemini API Key present:', !!geminiKey);
+      console.log('Gemini API Key (first 10 chars):', geminiKey?.substring(0, 10));
+      
+      if (geminiKey) {
+        try {
+          const testFlashcards = await searchService.generateFlashcards('test topic');
+          console.log('Test flashcards generated:', testFlashcards.length);
+          setApiStatus(`✅ Gemini API working - Generated ${testFlashcards.length} flashcards`);
+        } catch (error) {
+          console.error('Gemini API test failed:', error);
+          setApiStatus(`❌ Gemini API failed: ${error}`);
+        }
+      } else {
+        setApiStatus('❌ Gemini API key not found');
+      }
+    };
+    
+    testAPI();
+  }, []);
 
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
@@ -86,6 +112,11 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
         <p className="text-xl text-gray-600 mb-8">
           Get comprehensive learning resources including videos, articles, research papers, quizzes, and flashcards
         </p>
+        {apiStatus && (
+          <div className={`text-sm p-2 rounded ${apiStatus.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            API Status: {apiStatus}
+          </div>
+        )}
       </div>
 
       {/* Search Form */}

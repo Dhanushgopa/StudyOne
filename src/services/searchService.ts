@@ -25,6 +25,7 @@ export class SearchService {
 
   constructor() {
     console.log('SearchService constructor - Gemini API Key:', this.GEMINI_API_KEY ? 'Present' : 'Missing');
+    console.log('Full Gemini API Key (first 20 chars):', this.GEMINI_API_KEY?.substring(0, 20));
     if (this.GEMINI_API_KEY) {
       this.genAI = new GoogleGenerativeAI(this.GEMINI_API_KEY);
       console.log('Gemini AI initialized successfully');
@@ -182,12 +183,18 @@ Requirements for each question:
 
   // AI-powered Flashcard Generation
   async generateFlashcards(topic: string) {
+    console.log('=== FLASHCARD GENERATION START ===');
+    console.log('Topic:', topic);
+    console.log('Gemini API available:', !!this.genAI);
+    console.log('API Key present:', !!this.GEMINI_API_KEY);
+    
     try {
       if (!this.genAI) {
         console.warn('Gemini API key not found, using mock data');
         return this.getMockFlashcards(topic);
       }
 
+      console.log('Attempting to call Gemini API...');
       const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
       
       const prompt = `You are an expert educational content creator specializing in comprehensive study materials. Create exactly 8 high-quality flashcards about "${topic}".
@@ -221,6 +228,7 @@ Requirements for each flashcard:
 
 Focus on creating flashcards that promote deep learning and critical thinking about ${topic}.`;
 
+      console.log('Sending request to Gemini...');
       const result = await model.generateContent(prompt);
       const response = await result.response;
       console.log('Gemini API response received for flashcards');
@@ -228,6 +236,7 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
       
       console.log('Raw Gemini response:', jsonText.substring(0, 200) + '...');
       const flashcards = JSON.parse(jsonText);
+      console.log('Parsed flashcards:', flashcards.length);
       
       return flashcards.map((card: any, index: number) => ({
         id: `fc-${index + 1}`,
