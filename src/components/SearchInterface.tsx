@@ -17,19 +17,20 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
 
+    console.log('Starting search for:', searchQuery);
     setIsSearching(true);
     
     try {
-      console.log('Starting search for:', searchQuery);
       
       // Perform parallel searches for content types (except quiz which takes longer)
+      console.log('Fetching videos, articles, and papers...');
       const [videos, articles, papers] = await Promise.all([
         searchService.searchYouTubeVideos(searchQuery),
         searchService.searchArticles(searchQuery),
         searchService.searchResearchPapers(searchQuery)
       ]);
 
-      console.log('Basic search completed, generating AI content...');
+      console.log('Basic search completed. Starting AI content generation...');
       
       // Generate AI content (quiz and flashcards) - these may take longer
       const [quiz, flashcards] = await Promise.all([
@@ -37,7 +38,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
         searchService.generateFlashcards(searchQuery)
       ]);
       
-      console.log('AI content generation completed');
+      console.log('AI content generation completed. Quiz questions:', quiz.questions.length, 'Flashcards:', flashcards.length);
       
       const searchResult: SearchResult = {
         id: `search-${Date.now()}`,

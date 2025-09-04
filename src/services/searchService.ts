@@ -223,8 +223,10 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
+      console.log('Gemini API response received for flashcards');
       const jsonText = response.text().replace(/```json\n?|\n?```/g, '').trim();
       
+      console.log('Raw Gemini response:', jsonText.substring(0, 200) + '...');
       const flashcards = JSON.parse(jsonText);
       
       return flashcards.map((card: any, index: number) => ({
@@ -235,6 +237,7 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
       }));
     } catch (error) {
       console.error('Gemini flashcard generation error:', error);
+      console.log('Falling back to mock flashcard data');
       return this.getMockFlashcards(topic);
     }
   }
