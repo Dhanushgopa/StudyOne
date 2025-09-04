@@ -24,8 +24,7 @@ export class SearchService {
   }
 
   constructor() {
-    console.log('SearchService constructor - Gemini API Key:', this.GEMINI_API_KEY ? 'Present' : 'Missing');
-    console.log('Full Gemini API Key (first 20 chars):', this.GEMINI_API_KEY?.substring(0, 20));
+    console.log('SearchService constructor - Gemini API Key:', this.GEMINI_API_KEY ? `Present (${this.GEMINI_API_KEY.substring(0, 10)}...)` : 'Missing');
     if (this.GEMINI_API_KEY) {
       this.genAI = new GoogleGenerativeAI(this.GEMINI_API_KEY);
       console.log('Gemini AI initialized successfully');

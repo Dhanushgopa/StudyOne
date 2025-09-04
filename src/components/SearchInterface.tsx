@@ -18,19 +18,18 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({ onSearchComplete }) =
   // Test API on component mount
   React.useEffect(() => {
     const testAPI = async () => {
-      console.log('Testing Gemini API...');
+      console.log('Testing Gemini API with key:', import.meta.env.VITE_GEMINI_API_KEY?.substring(0, 10) + '...');
       const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      console.log('Gemini API Key present:', !!geminiKey);
-      console.log('Gemini API Key (first 10 chars):', geminiKey?.substring(0, 10));
       
       if (geminiKey) {
         try {
-          const testFlashcards = await searchService.generateFlashcards('test topic');
-          console.log('Test flashcards generated:', testFlashcards.length);
-          setApiStatus(`✅ Gemini API working - Generated ${testFlashcards.length} flashcards`);
+          // Simple test call to Gemini
+          const testResult = await searchService.testGeminiConnection();
+          console.log('Gemini test result:', testResult);
+          setApiStatus(`✅ Gemini API working - ${testResult}`);
         } catch (error) {
           console.error('Gemini API test failed:', error);
-          setApiStatus(`❌ Gemini API failed: ${error}`);
+          setApiStatus(`❌ Gemini API failed: ${error.message}`);
         }
       } else {
         setApiStatus('❌ Gemini API key not found');
