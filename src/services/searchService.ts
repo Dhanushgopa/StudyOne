@@ -120,7 +120,7 @@ export class SearchService {
         return this.getMockQuiz(topic);
       }
       
-      const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = `You are an expert educational content creator. Create a comprehensive ${difficulty} level quiz about "${topic}" with exactly 8 multiple choice questions.
 
@@ -194,7 +194,7 @@ Requirements for each question:
       }
 
       console.log('Attempting to call Gemini API...');
-      const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = `You are an expert educational content creator specializing in comprehensive study materials. Create exactly 8 high-quality flashcards about "${topic}".
 
@@ -284,7 +284,7 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
       throw new Error('Gemini API not initialized');
     }
     
-    const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent("Say hello in one word");
     const response = await result.response;
     return response.text();
