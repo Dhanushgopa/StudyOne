@@ -179,51 +179,49 @@ Requirements for each question:
   // AI-powered Flashcard Generation
   async generateFlashcards(topic: string) {
     try {
-      if (!this.OPENAI_API_KEY) {
-        console.warn('OpenAI API key not found, using mock data');
+      if (!this.genAI) {
+        console.warn('Gemini API key not found, using mock data');
         return this.getMockFlashcards(topic);
       }
 
-      const response = await this.retryWithBackoff(async () => {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: `You are an educational flashcard generator. Create exactly 8 flashcards about ${topic}. Return ONLY a valid JSON array with this structure:
-                [
-                  {
-                    "front": "Question or term",
-                    "back": "Answer or definition",
-                    "difficulty": "easy|medium|hard"
-                  }
-                ]`
-              },
-              {
-                role: 'user',
-                content: `Generate 8 educational flashcards about ${topic}`
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: 1500
-          })
-        });
+      const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      const prompt = `You are an expert educational content creator specializing in comprehensive study materials. Create exactly 8 high-quality flashcards about "${topic}".
 
-        if (!res.ok) {
-          throw new Error(`OpenAI API error: ${res.status}`);
-        }
+CRITICAL: Return ONLY a valid JSON array with this exact structure:
+[
+  {
+    "front": "Clear, specific question or concept prompt",
+    "back": "Comprehensive answer with explanations, examples, and context",
+    "difficulty": "easy|medium|hard"
+  }
+]
 
-        return res;
-      });
+Requirements for each flashcard:
+1. **Front side**: Clear, specific questions that test understanding (not just memorization)
+2. **Back side**: Comprehensive answers (100-200 words) with:
+   - Detailed explanations
+   - Practical examples
+   - Real-world applications
+   - Connections to related concepts
+3. **Difficulty distribution**: 2 easy, 4 medium, 2 hard
+4. **Content areas**: Cover diverse aspects of ${topic}:
+   - Fundamental concepts and definitions
+   - Practical applications and use cases
+   - Best practices and methodologies
+   - Problem-solving scenarios
+   - Advanced concepts and optimization
+   - Real-world implementations
+   - Troubleshooting and debugging
+   - Future trends and developments
 
-      const data = await response.json();
-      const flashcards = JSON.parse(data.choices[0].message.content);
+Focus on creating flashcards that promote deep learning and critical thinking about ${topic}.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const jsonText = response.text().replace(/```json\n?|\n?```/g, '').trim();
+      
+      const flashcards = JSON.parse(jsonText);
       
       return flashcards.map((card: any, index: number) => ({
         id: `fc-${index + 1}`,
@@ -232,7 +230,7 @@ Requirements for each question:
         difficulty: card.difficulty || 'medium'
       }));
     } catch (error) {
-      console.error('Flashcard generation error:', error);
+      console.error('Gemini flashcard generation error:', error);
       return this.getMockFlashcards(topic);
     }
   }
