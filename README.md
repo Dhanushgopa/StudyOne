@@ -70,7 +70,7 @@ To enable the research assistant functionality, you'll need to obtain API keys f
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Enable YouTube Data API v3
    - Create credentials and copy the API key
-   - Add to `.env` as `REACT_APP_YOUTUBE_API_KEY`
+   - Add to `.env` as `VITE_YOUTUBE_API_KEY`
 
 2. **Google Custom Search API**
    - Enable Custom Search API in Google Cloud Console

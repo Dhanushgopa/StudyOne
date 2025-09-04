@@ -41,12 +41,23 @@ export class SearchService {
         return this.getMockYouTubeVideos(query);
       }
 
+      console.log('YouTube API Key present:', !!this.YOUTUBE_API_KEY);
+      console.log('Making YouTube API request for query:', query);
+
       const searchResponse = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${this.YOUTUBE_API_KEY}`
       );
 
       if (!searchResponse.ok) {
-        throw new Error(`YouTube API error: ${searchResponse.status}`);
+        const errorText = await searchResponse.text();
+        console.error('YouTube API Error Details:', {
+          status: searchResponse.status,
+          statusText: searchResponse.statusText,
+          response: errorText,
+          apiKey: this.YOUTUBE_API_KEY ? `${this.YOUTUBE_API_KEY.substring(0, 10)}...` : 'Not found'
+        });
+        console.warn('YouTube API failed, falling back to mock data');
+        return this.getMockYouTubeVideos(query);
       }
 
       const searchData = await searchResponse.json();
