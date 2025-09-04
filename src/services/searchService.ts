@@ -184,39 +184,43 @@ Requirements for each question:
         return this.getMockFlashcards(topic);
       }
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an educational flashcard generator. Create exactly 8 flashcards about ${topic}. Return ONLY a valid JSON array with this structure:
-              [
-                {
-                  "front": "Question or term",
-                  "back": "Answer or definition",
-                  "difficulty": "easy|medium|hard"
-                }
-              ]`
-            },
-            {
-              role: 'user',
-              content: `Generate 8 educational flashcards about ${topic}`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1500
-        })
-      });
+      const response = await this.retryWithBackoff(async () => {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an educational flashcard generator. Create exactly 8 flashcards about ${topic}. Return ONLY a valid JSON array with this structure:
+                [
+                  {
+                    "front": "Question or term",
+                    "back": "Answer or definition",
+                    "difficulty": "easy|medium|hard"
+                  }
+                ]`
+              },
+              {
+                role: 'user',
+                content: `Generate 8 educational flashcards about ${topic}`
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
+        if (!res.ok) {
+          throw new Error(`OpenAI API error: ${res.status}`);
+        }
+
+        return res;
+      });
 
       const data = await response.json();
       const flashcards = JSON.parse(data.choices[0].message.content);
@@ -231,6 +235,34 @@ Requirements for each question:
       console.error('Flashcard generation error:', error);
       return this.getMockFlashcards(topic);
     }
+  }
+
+  // Retry mechanism with exponential backoff for rate limiting
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+  ): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        const isRateLimit = error.message?.includes('429');
+        const isLastAttempt = attempt === maxRetries;
+        
+        if (!isRateLimit || isLastAttempt) {
+          throw error;
+        }
+        
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`Rate limited, retrying in ${delay}ms... (attempt ${attempt + 1}/${maxRetries + 1})`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw new Error('Max retries exceeded');
   }
 
   // Helper methods for YouTube API
