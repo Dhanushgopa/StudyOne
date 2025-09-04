@@ -140,7 +140,52 @@ Requirements for each question:
 5. Use specific, practical examples related to ${topic}
 6. Vary difficulty across questions (2 easy, 4 medium, 2 hard)
 7. Focus on practical knowledge and real-world applications
-8. Avoid generic or superficial questions
+8. Avoid generic or superficial questions`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Clean the response to extract JSON
+      let jsonText = text.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+
+      const quizData = JSON.parse(jsonText);
+      
+      if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length !== 8) {
+        throw new Error('Invalid quiz data structure from Gemini');
+      }
+      
+      return {
+        id: `quiz-${Date.now()}`,
+        title: quizData.title,
+        questions: quizData.questions.map((q: any, index: number) => ({
+          id: `q${index + 1}`,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation
+        })),
+        completed: false
+      };
+    } catch (error) {
+      console.error('Gemini quiz generation error:', error);
+      return this.getMockQuiz(topic);
+    }
+  }
+
+  // AI-powered Flashcard Generation
+  async generateFlashcards(topic: string) {
+    try {
+      if (!this.genAI) {
+        console.warn('Gemini API key not found, using mock data');
+        return this.getMockFlashcards(topic);
+      }
+      
       const model = this.genAI.getGenerativeModel({ model: "gemini-pro" });
       
       const prompt = `You are an expert educational flashcard creator. Create exactly 8 comprehensive flashcards about "${topic}".
@@ -163,7 +208,7 @@ Requirements:
 6. Cover different aspects: fundamentals, applications, best practices, troubleshooting, advanced concepts, security, performance, trends
 7. Provide comprehensive explanations, not just definitions
 8. Include specific examples and practical scenarios
-9. Explain the "why" and "how", not just the "what"
+9. Explain the "why\" and "how", not just the "what"
 10. Make each answer a mini-lesson with genuine educational value
 
 Focus on practical knowledge and real-world applications of ${topic}.`;
@@ -174,7 +219,7 @@ Focus on practical knowledge and real-world applications of ${topic}.`;
       
       // Clean the response to extract JSON
       let jsonText = text.trim();
-      if (jsonText.startsWith('```json')) {
+      if (jsonText.startsWith('``\`json')) {
         jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
       } else if (jsonText.startsWith('```')) {
         jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
