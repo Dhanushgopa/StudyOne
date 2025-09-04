@@ -24,8 +24,12 @@ export class SearchService {
   }
 
   constructor() {
+    console.log('SearchService constructor - Gemini API Key:', this.GEMINI_API_KEY ? 'Present' : 'Missing');
     if (this.GEMINI_API_KEY) {
       this.genAI = new GoogleGenerativeAI(this.GEMINI_API_KEY);
+      console.log('Gemini AI initialized successfully');
+    } else {
+      console.warn('Gemini API key not found, will use mock data');
     }
   }
 
