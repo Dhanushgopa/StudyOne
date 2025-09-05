@@ -158,7 +158,7 @@ Requirements for each question:
 7. Focus on practical knowledge and real-world applications
 8. Avoid generic or superficial questions`;
 
-      const result = await model.generateContent(prompt);
+      const result = await this.retryWithBackoff(() => model.generateContent(prompt));
       const response = await result.response;
       const jsonText = response.text().replace(/```json\n?|\n?```/g, '').trim();
       
@@ -239,7 +239,7 @@ Requirements for each flashcard:
 Focus on creating flashcards that promote deep learning and critical thinking about ${topic}.`;
 
       console.log('Sending request to Gemini...');
-      const result = await model.generateContent(prompt);
+      const result = await this.retryWithBackoff(() => model.generateContent(prompt));
       const response = await result.response;
       console.log('Gemini API response received for flashcards');
       const jsonText = response.text().replace(/```json\n?|\n?```/g, '').trim();
