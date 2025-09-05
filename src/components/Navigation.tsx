@@ -1,5 +1,6 @@
 import React from 'react';
 import { Home, BookOpen, Video, Brain, Target, Bookmark, Search, FileText } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 interface NavigationProps {
   activeView: string;
@@ -46,6 +47,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeView, onViewChange }) => 
                 </button>
               );
             })}
+            <ThemeToggle />
           </div>
         </div>
       </div>

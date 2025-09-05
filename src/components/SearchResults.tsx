@@ -3,6 +3,10 @@ import { ArrowLeft, ExternalLink, Calendar, User, Eye, Clock, Download, BookOpen
 import { SearchResult, YouTubeVideo, Article, ResearchPaper } from '../types';
 import QuizSystem from './QuizSystem';
 import VideoNoteEditor from './VideoNoteEditor';
+import EnhancedFlashcards from './EnhancedFlashcards';
+import StudyRoomLobby from './StudyRoomLobby';
+import StudyRoom from './StudyRoom';
+import NotesPanel from './NotesPanel';
 
 interface SearchResultsProps {
   results: SearchResult;
@@ -14,6 +18,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onBack }) => {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [selectedVideoForNotes, setSelectedVideoForNotes] = useState<YouTubeVideo | null>(null);
+  const [showStudyRoomLobby, setShowStudyRoomLobby] = useState(false);
+  const [currentStudyRoom, setCurrentStudyRoom] = useState<string | null>(null);
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [currentFlashcardId, setCurrentFlashcardId] = useState<string | null>(null);
 
   const toggleCard = (cardId: string) => {
     const newFlipped = new Set(flippedCards);
@@ -46,6 +54,39 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onBack }) => {
     setShowNoteEditor(true);
   };
 
+  const handleJoinStudyRoom = () => {
+    setShowStudyRoomLobby(true);
+  };
+
+  const handleCreateRoom = (roomName: string, isPrivate: boolean) => {
+    const roomId = `room-${Date.now()}`;
+    setCurrentStudyRoom(roomId);
+    setShowStudyRoomLobby(false);
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    setCurrentStudyRoom(roomId);
+    setShowStudyRoomLobby(false);
+  };
+
+  const handleLeaveRoom = () => {
+    setCurrentStudyRoom(null);
+  };
+
+  const handleOpenNotes = (flashcardId: string) => {
+    setCurrentFlashcardId(flashcardId);
+    setShowNotesPanel(true);
+  };
+
+  // If in study room, show study room interface
+  if (currentStudyRoom) {
+    return (
+      <StudyRoom
+        roomId={currentStudyRoom}
+        onLeave={handleLeaveRoom}
+      />
+    );
+  }
   const VideoCard: React.FC<{ video: YouTubeVideo }> = ({ video }) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
       <div className="aspect-video relative">
@@ -241,42 +282,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onBack }) => {
         )}
 
         {activeTab === 'flashcards' && (
-          <div>
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Study Flashcards</h3>
-              <p className="text-gray-600">Click on any card to reveal the answer</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {results.flashcards.map((card) => (
-                <div key={card.id} className="group perspective-1000">
-                  <div
-                    className={`relative preserve-3d w-full h-48 duration-500 cursor-pointer ${
-                      flippedCards.has(card.id) ? 'rotate-y-180' : ''
-                    }`}
-                    onClick={() => toggleCard(card.id)}
-                  >
-                    {/* Front */}
-                    <div className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 flex items-center justify-center backface-hidden">
-                      <div className="text-center">
-                        <p className="text-blue-900 font-medium mb-2">{card.front}</p>
-                        <div className={`inline-block px-2 py-1 rounded-full text-xs ${
-                          card.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
-                          card.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {card.difficulty}
-                        </div>
-                      </div>
-                    </div>
-                    {/* Back */}
-                    <div className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6 flex items-center justify-center rotate-y-180 backface-hidden">
-                      <p className="text-center text-sm leading-relaxed">{card.back}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <EnhancedFlashcards
+            flashcards={results.flashcards}
+            onOpenNotes={handleOpenNotes}
+            onJoinStudyRoom={handleJoinStudyRoom}
+          />
         )}
       </div>
 
@@ -291,6 +301,22 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onBack }) => {
           }}
         />
       )}
+
+      {/* Study Room Lobby */}
+      {showStudyRoomLobby && (
+        <StudyRoomLobby
+          onJoinRoom={handleJoinRoom}
+          onCreateRoom={handleCreateRoom}
+          onClose={() => setShowStudyRoomLobby(false)}
+        />
+      )}
+
+      {/* Notes Panel */}
+      <NotesPanel
+        isOpen={showNotesPanel}
+        onClose={() => setShowNotesPanel(false)}
+        currentFlashcardId={currentFlashcardId}
+      />
     </div>
   );
 };
