@@ -187,7 +187,7 @@ Requirements for each question:
       };
     } catch (error) {
       console.error('Gemini quiz generation error:', error);
-      return this.getMockQuiz(topic);
+      return Promise.resolve(this.getMockQuiz(topic));
     }
   }
 
@@ -257,7 +257,7 @@ Focus on creating flashcards that promote deep learning and critical thinking ab
     } catch (error) {
       console.error('Gemini flashcard generation error:', error);
       console.log('Falling back to mock flashcard data');
-      return this.getMockFlashcards(topic);
+      return Promise.resolve(this.getMockFlashcards(topic));
     }
   }
 
